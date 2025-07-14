@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teal‑Glow Stopwatch</title>
+
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    /* -------- base layout -------- */
+    body{
+      background:linear-gradient(to right,#e0f7fa,#fff);
+      min-height:100vh;display:flex;justify-content:center;align-items:center;
+      font-family:'Segoe UI',sans-serif;transition:background-color .3s;
+    }
+
+    /* main card */
+    .stopwatch-container{
+      background-color:#009688;
+      color:#fff;
+      padding:30px;border-radius:15px;
+      box-shadow:0 8px 20px rgba(0,0,0,.15);
+      width:100%;max-width:400px;
+      transition:transform .25s,box-shadow .25s;
+    }
+    .stopwatch-container:hover{
+      transform:translateY(-6px);
+      box-shadow:0 14px 35px rgba(0,150,136,.55);
+    }
+
+    /* timer text + hover */
+    .timer-display{
+      font-size:3rem;font-weight:bold;margin-bottom:20px;transition:color .2s;
+    }
+    .timer-display:hover{color:#00e5ff;}
+
+    /* lap box */
+    .lap{background-color:rgba(255,255,255,.15);padding:8px 12px;border-radius:6px;margin-bottom:6px;font-family:monospace;}
+    .lap-list{max-height:200px;overflow-y:auto;}
+    h1{font-size:2rem;margin-bottom:20px;}
+
+    /* button baseline + hover neon */
+    .btn{min-width:80px;transition:all .2s;}
+    .btn-success:hover{background:#00c853;border-color:#00c853;color:#fff;box-shadow:0 0 8px #00c853;}
+    .btn-warning:hover{background:#ffb300;border-color:#ffb300;color:#000;box-shadow:0 0 8px #ffb300;}
+    .btn-danger:hover{background:#ff1744;border-color:#ff1744;box-shadow:0 0 8px #ff1744;}
+    .btn-primary:hover{background:#2979ff;border-color:#2979ff;box-shadow:0 0 8px #2979ff;}
+
+    /* -------- GitHub neon badge -------- */
+    .github-tag{
+      position:fixed;right:12px;bottom:30%;z-index:1000;
+      background:#0d0d0d;color:#00eaff;
+      padding:10px 18px;border-radius:10px;
+      font-weight:600;letter-spacing:0.5px;
+      box-shadow:0 0 12px #00eaff;
+      cursor:pointer;text-decoration:none;
+      transition:transform .25s,box-shadow .25s;
+      user-select:none;
+    }
+    .github-tag:hover{
+      transform:translateY(-4px) scale(1.05);
+      box-shadow:0 0 18px #00eaff,0 0 30px #00eaff;
+    }
+
+    /* -------- DARK MODE -------- */
+    body.dark-mode{
+      background:linear-gradient(to right,#121212,#202020);color:#e8e8e8;
+    }
+    body.dark-mode .stopwatch-container{
+      background-color:#00796b;
+      box-shadow:0 8px 20px rgba(0,0,0,.6);
+    }
+    body.dark-mode .stopwatch-container:hover{
+      box-shadow:0 14px 35px rgba(0,255,230,.45);
+    }
+    body.dark-mode .lap{background-color:rgba(0,0,0,.25);}
+    body.dark-mode .form-check-label{color:#e8e8e8;}
+    body.dark-mode .github-tag{
+      background:#000;color:#00ffea;
+      box-shadow:0 0 12px #00ffea;
+    }
+    body.dark-mode .github-tag:hover{
+      box-shadow:0 0 18px #00ffea,0 0 30px #00ffea;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- GitHub neon badge -->
+  <a class="github-tag" href="https://github.com/stardust-xt" target="_blank" rel="noopener">
+    GitHub • stardust‑xt
+  </a>
+
+  <div class="stopwatch-container text-center">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h1 class="m-0">⏱ Stopwatch</h1>
+      <!-- Dark-mode switch -->
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="modeSwitch" onclick="document.body.classList.toggle('dark-mode')">
+        <label class="form-check-label" for="modeSwitch">Dark</label>
+      </div>
+    </div>
+
+    <div class="timer-display" id="display">00:00:00</div>
+
+    <div class="d-flex justify-content-center gap-2 flex-wrap mb-3">
+      <button class="btn btn-success" id="startBtn" onclick="startTimer()">Start</button>
+      <button class="btn btn-warning text-dark" onclick="pauseTimer()">Pause</button>
+      <button class="btn btn-danger" onclick="resetTimer()">Reset</button>
+      <button class="btn btn-primary" onclick="recordLap()">Lap</button>
+    </div>
+
+    <div class="lap-list text-start" id="laps"><h5>Lap Times</h5></div>
+  </div>
+
+  <script>
+    /* ---------- stopwatch logic ---------- */
+    let [hours, minutes, seconds] = [0,0,0];
+    let timer=null, lapCount=0;
+    const display=document.getElementById("display");
+    const laps=document.getElementById("laps");
+
+    function updateDisplay(){
+      display.textContent=[hours,minutes,seconds].map(n=>String(n).padStart(2,'0')).join(':');
+    }
+    function startTimer(){
+      if(timer) return;
+      timer=setInterval(()=>{seconds++;if(seconds===60){seconds=0;minutes++;}if(minutes===60){minutes=0;hours++;}updateDisplay();},1000);
+      document.getElementById("startBtn").disabled=true;
+    }
+    function pauseTimer(){clearInterval(timer);timer=null;document.getElementById("startBtn").disabled=false;}
+    function resetTimer(){pauseTimer();[hours,minutes,seconds]=[0,0,0];lapCount=0;updateDisplay();laps.innerHTML="<h5>Lap Times</h5>";}
+    function recordLap(){if(!timer)return;laps.insertAdjacentHTML('beforeend',`<div class="lap">Lap ${++lapCount}: ${display.textContent}</div>`);}
+  </script>
+
+</body>
+</html>
